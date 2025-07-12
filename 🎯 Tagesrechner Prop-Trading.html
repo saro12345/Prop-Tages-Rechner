@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎯 Prop-Trading Rechner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 20px;
+        }
+
+        .input-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+
+        .results-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            height: fit-content;
+        }
+
+        .card.full-width {
+            grid-column: 1 / -1;
+        }
+
+        h1 {
+            color: #4a5568;
+            margin-bottom: 25px;
+            text-align: center;
+            font-size: 24px;
+        }
+
+        h2 {
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-size: 18px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f7fafc;
+        }
+
+        .result-row:last-child {
+            border-bottom: none;
+        }
+
+        .result-label {
+            font-weight: 500;
+            color: #4a5568;
+        }
+
+        .result-value {
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .status-ok { color: #38a169; }
+        .status-warning { color: #d69e2e; }
+        .status-critical { color: #e53e3e; }
+
+        .highlight-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .sl-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .sl-item {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .sl-item.critical {
+            background: #fed7d7;
+        }
+
+        .days-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .day-item {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .emoji {
+            font-size: 20px;
+            margin-right: 8px;
+        }
+
+        .live-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #38a169;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        @media (max-width: 1200px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            
+            .results-panel {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Eingabe Panel -->
+        <div class="input-panel">
+            <h1>🎯 Prop-Trading Setup</h1>
+            
+            <div class="input-group">
+                <label for="zielCHF">💰 Monatsziel (CHF)</label>
+                <input type="number" id="zielCHF" value="10000" min="1000" step="500">
+            </div>
+
+            <div class="input-group">
+                <label for="wechselkurs">💱 CHF→USD Kurs</label>
+                <input type="number" id="wechselkurs" value="1.12" min="0.5" max="2" step="0.01">
+            </div>
+
+            <div class="input-group">
+                <label for="konten">🏢 Anzahl Prop-Konten</label>
+                <input type="number" id="konten" value="5" min="1" max="20">
+            </div>
+
+            <div class="input-group">
+                <label for="split">📊 Durchschn. Split (%)</label>
+                <input type="number" id="split" value="85" min="50" max="95">
+            </div>
+
+            <div class="input-group">
+                <label for="lots">📈 Lots pro Trade</label>
+                <input type="number" id="lots" value="2" min="0.1" max="10" step="0.1">
+            </div>
+
+            <div class="input-group">
+                <label for="handelstage">📅 Handelstage/Monat</label>
+                <input type="number" id="handelstage" value="10" min="5" max="22">
+            </div>
+
+            <div class="input-group">
+                <label for="tp">🎯 Take Profit (Ticks)</label>
+                <input type="number" id="tp" value="30" min="5" max="100">
+            </div>
+
+            <div class="input-group">
+                <label for="sl">🛑 Stop Loss (Ticks)</label>
+                <input type="number" id="sl" value="10" min="2" max="50">
+            </div>
+
+            <div class="input-group">
+                <label for="dailyDD">⚠️ Daily Drawdown Limit (USD)</label>
+                <input type="number" id="dailyDD" value="2000" min="500" max="10000" step="100">
+            </div>
+        </div>
+
+        <!-- Ergebnisse Panel -->
+        <div class="results-panel">
+            <!-- Grundziele -->
+            <div class="card">
+                <h2><span class="emoji">💰</span>Grundziele</h2>
+                <div class="result-row">
+                    <span class="result-label">USD Ziel</span>
+                    <span class="result-value" id="usdZiel">$11,200</span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Brutto USD (nach Split)</span>
+                    <span class="result-value" id="bruttoUSD">$13,176</span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">USD pro Konto/Tag</span>
+                    <span class="result-value" id="usdProTag">$264</span>
+                </div>
+                <div class="highlight-box">
+                    <div><strong>Ticks pro Konto/Tag</strong></div>
+                    <div style="font-size: 32px; margin-top: 10px;" id="ticksProTag">26</div>
+                </div>
+            </div>
+
+            <!-- SL Aufhol-Rechnung -->
+            <div class="card">
+                <h2><span class="emoji">🛑</span>SL Aufhol-Strategie</h2>
+                <div class="result-row">
+                    <span class="result-label">1 SL kostet</span>
+                    <span class="result-value" id="slKosten">$300</span>
+                </div>
+                <div class="sl-grid">
+                    <div class="sl-item">
+                        <div><strong>Nach 1 SL</strong></div>
+                        <div id="tp1SL" style="font-size: 24px; color: #38a169;">2</div>
+                        <div>TP-Trades</div>
+                    </div>
+                    <div class="sl-item">
+                        <div><strong>Nach 2 SL</strong></div>
+                        <div id="tp2SL" style="font-size: 24px; color: #d69e2e;">3</div>
+                        <div>TP-Trades</div>
+                    </div>
+                    <div class="sl-item critical">
+                        <div><strong>Nach 3 SL</strong></div>
+                        <div id="tp3SL" style="font-size: 24px; color: #e53e3e;">4</div>
+                        <div>TP-Trades</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Daily Drawdown -->
+            <div class="card">
+                <h2><span class="emoji">⚠️</span>Daily Drawdown Schutz</h2>
+                <div class="result-row">
+                    <span class="result-label">DD Limit</span>
+                    <span class="result-value" id="ddLimit">$2,000</span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Max SL vor Hit</span>
+                    <span class="result-value status-warning" id="maxSL">6</span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Puffer nach 3 SL</span>
+                    <span class="result-value status-ok" id="puffer">$1,100</span>
+                </div>
+            </div>
+
+            <!-- Live Status -->
+            <div class="card">
+                <h2><span class="live-indicator"></span>Live Status</h2>
+                <div class="highlight-box" id="statusBox">
+                    <div id="statusText">✅ Setup ist machbar!</div>
+                    <div style="margin-top: 10px; font-size: 14px;" id="statusDetail">26 Ticks/Tag ist realistisch</div>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Risk/Reward Ratio</span>
+                    <span class="result-value" id="rrRatio">3:1</span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">Benötigte Mindest-Trefferquote</span>
+                    <span class="result-value" id="minWinrate">25%</span>
+                </div>
+            </div>
+
+            <!-- Verlust-Tag Simulation -->
+            <div class="card full-width">
+                <h2><span class="emoji">📅</span>Verlust-Tag Simulation</h2>
+                <div class="days-grid">
+                    <div class="day-item">
+                        <div><strong>Nach 1 rotem Tag</strong></div>
+                        <div>Ticks/Tag: <span id="ticks1Tag" class="status-ok">29</span></div>
+                        <div>ODER +<span id="extra1Tag">1</span> Extra-Tag</div>
+                    </div>
+                    <div class="day-item">
+                        <div><strong>Nach 2 roten Tagen</strong></div>
+                        <div>Ticks/Tag: <span id="ticks2Tage" class="status-warning">33</span></div>
+                        <div>ODER +<span id="extra2Tage">2</span> Extra-Tage</div>
+                    </div>
+                    <div class="day-item">
+                        <div><strong>Nach 3 roten Tagen</strong></div>
+                        <div>Ticks/Tag: <span id="ticks3Tage" class="status-critical">38</span></div>
+                        <div>ODER +<span id="extra3Tage">3</span> Extra-Tage</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const tickWert = 5; // Standard NQ Tick-Wert
+
+        function berechneAlles() {
+            // Eingaben holen
+            const zielCHF = parseFloat(document.getElementById('zielCHF').value) || 10000;
+            const wechselkurs = parseFloat(document.getElementById('wechselkurs').value) || 1.12;
+            const konten = parseInt(document.getElementById('konten').value) || 5;
+            const split = parseFloat(document.getElementById('split').value) || 85;
+            const lots = parseFloat(document.getElementById('lots').value) || 2;
+            const handelstage = parseInt(document.getElementById('handelstage').value) || 10;
+            const tp = parseInt(document.getElementById('tp').value) || 30;
+            const sl = parseInt(document.getElementById('sl').value) || 10;
+            const dailyDD = parseInt(document.getElementById('dailyDD').value) || 2000;
+
+            // Grundberechnungen
+            const usdZiel = zielCHF * wechselkurs;
+            const bruttoUSD = usdZiel / (split / 100);
+            const usdProTag = bruttoUSD / konten / handelstage;
+            const ticksProTag = usdProTag / (lots * tickWert);
+
+            // SL/TP Berechnungen
+            const slKosten = sl * lots * tickWert;
+            const tp1SL = Math.ceil((sl + ticksProTag) / tp);
+            const tp2SL = Math.ceil((sl * 2 + ticksProTag) / tp);
+            const tp3SL = Math.ceil((sl * 3 + ticksProTag) / tp);
+
+            // Daily Drawdown
+            const maxSL = Math.floor(dailyDD / slKosten);
+            const puffer = dailyDD - (slKosten * 3);
+
+            // Verlust-Tag Simulation
+            const ticks1Tag = bruttoUSD / konten / (handelstage - 1) / (lots * tickWert);
+            const ticks2Tage = bruttoUSD / konten / (handelstage - 2) / (lots * tickWert);
+            const ticks3Tage = bruttoUSD / konten / (handelstage - 3) / (lots * tickWert);
+            const extra1Tag = Math.ceil(ticksProTag / ticksProTag);
+            const extra2Tage = Math.ceil((ticksProTag * 2) / ticksProTag);
+            const extra3Tage = Math.ceil((ticksProTag * 3) / ticksProTag);
+
+            // Risk/Reward und Mindest-Winrate
+            const rrRatio = (tp / sl).toFixed(1);
+            const minWinrate = ((sl / (tp + sl)) * 100).toFixed(0);
+
+            // Ergebnisse anzeigen
+            document.getElementById('usdZiel').textContent = `$${usdZiel.toLocaleString()}`;
+            document.getElementById('bruttoUSD').textContent = `$${Math.round(bruttoUSD).toLocaleString()}`;
+            document.getElementById('usdProTag').textContent = `$${Math.round(usdProTag)}`;
+            document.getElementById('ticksProTag').textContent = Math.round(ticksProTag);
+
+            document.getElementById('slKosten').textContent = `$${slKosten}`;
+            document.getElementById('tp1SL').textContent = tp1SL;
+            document.getElementById('tp2SL').textContent = tp2SL;
+            document.getElementById('tp3SL').textContent = tp3SL;
+
+            document.getElementById('ddLimit').textContent = `$${dailyDD.toLocaleString()}`;
+            document.getElementById('maxSL').textContent = maxSL;
+            document.getElementById('puffer').textContent = `$${puffer.toLocaleString()}`;
+
+            document.getElementById('rrRatio').textContent = `${rrRatio}:1`;
+            document.getElementById('minWinrate').textContent = `${minWinrate}%`;
+
+            document.getElementById('ticks1Tag').textContent = Math.round(ticks1Tag);
+            document.getElementById('ticks2Tage').textContent = Math.round(ticks2Tage);
+            document.getElementById('ticks3Tage').textContent = Math.round(ticks3Tage);
+            document.getElementById('extra1Tag').textContent = extra1Tag;
+            document.getElementById('extra2Tage').textContent = extra2Tage;
+            document.getElementById('extra3Tage').textContent = extra3Tage;
+
+            // Status bewerten
+            let statusText, statusDetail, statusClass;
+            if (ticksProTag < 30) {
+                statusText = "✅ Setup ist machbar!";
+                statusDetail = `${Math.round(ticksProTag)} Ticks/Tag ist realistisch`;
+                statusClass = "status-ok";
+            } else if (ticksProTag < 50) {
+                statusText = "⚠️ Setup ist anspruchsvoll";
+                statusDetail = `${Math.round(ticksProTag)} Ticks/Tag erfordert gute Performance`;
+                statusClass = "status-warning";
+            } else {
+                statusText = "❌ Setup ist sehr schwierig";
+                statusDetail = `${Math.round(ticksProTag)} Ticks/Tag ist sehr herausfordernd`;
+                statusClass = "status-critical";
+            }
+
+            document.getElementById('statusText').textContent = statusText;
+            document.getElementById('statusDetail').textContent = statusDetail;
+            
+            // Farben für Status anpassen
+            const statusBox = document.getElementById('statusBox');
+            statusBox.className = 'highlight-box';
+            if (statusClass === 'status-warning') {
+                statusBox.style.background = 'linear-gradient(135deg, #d69e2e 0%, #f6ad55 100%)';
+            } else if (statusClass === 'status-critical') {
+                statusBox.style.background = 'linear-gradient(135deg, #e53e3e 0%, #fc8181 100%)';
+            } else {
+                statusBox.style.background = 'linear-gradient(135deg, #38a169 0%, #68d391 100%)';
+            }
+
+            // Tick-Farben anpassen
+            document.getElementById('ticks1Tag').className = ticks1Tag < 35 ? 'status-ok' : 'status-warning';
+            document.getElementById('ticks2Tage').className = ticks2Tage < 40 ? 'status-warning' : 'status-critical';
+            document.getElementById('ticks3Tage').className = 'status-critical';
+        }
+
+        // Event Listener für alle Eingabefelder
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('input', berechneAlles);
+        });
+
+        // Initiale Berechnung
+        berechneAlles();
+    </script>
+</body>
+</html>
